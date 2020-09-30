@@ -36,24 +36,24 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
 
 
 async def blink(canvas, row, column, symbol='*'):
-  min_time_to_blink = 10
-  max_time_to_blink = 50
-  while True:
-      for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
-        canvas.addstr(row, column, symbol, curses.A_DIM)
-        await asyncio.sleep(0)
+    min_time_to_blink = 10
+    max_time_to_blink = 50
+    while True:
+        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+            canvas.addstr(row, column, symbol, curses.A_DIM)
+            await asyncio.sleep(0)
 
-      for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
-        canvas.addstr(row, column, symbol)
-        await asyncio.sleep(0)
+        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+            canvas.addstr(row, column, symbol)
+            await asyncio.sleep(0)
 
-      for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
-        canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await asyncio.sleep(0)
+        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+            canvas.addstr(row, column, symbol, curses.A_BOLD)
+            await asyncio.sleep(0)
 
-      for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
-        canvas.addstr(row, column, symbol)
-        await asyncio.sleep(0)
+        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+            canvas.addstr(row, column, symbol)
+            await asyncio.sleep(0)
 
 
 def draw(canvas):
@@ -63,25 +63,27 @@ def draw(canvas):
     rows = canvas.getmaxyx()[0] - 1
     columns = canvas.getmaxyx()[1] - 1
     symbols = ['+', '*', '.', ':']
-    coroutines = [blink(canvas, random.randint(1, rows), random.randint(1, columns), random.choice(symbols)) for _ in range(100)]
-    coroutines.append(fire(canvas, start_row=20, start_column=30, rows_speed=-0.3, columns_speed=0))
-    coroutines.append(animate_spaceship(canvas, start_row = 20, start_column=30))
+    coroutines = [blink(canvas, random.randint(1, rows), random.randint(
+        1, columns), random.choice(symbols)) for _ in range(100)]
+    coroutines.append(fire(canvas, rows / 2, columns / 2 +
+                           1, rows_speed=-0.5, columns_speed=0))
+    coroutines.append(animate_spaceship(canvas, rows, columns))
 
-    while True:      
-      for coroutine in coroutines:
-        try:
-          coroutine.send(None)
-          canvas.refresh()
-        except StopIteration:
-          coroutines.remove(coroutine)
-      
-      if len(coroutines) == 0:
-        break
+    while True:
+        for coroutine in coroutines:
+            try:
+                coroutine.send(None)
+                canvas.refresh()
+            except StopIteration:
+                coroutines.remove(coroutine)
+
+        if len(coroutines) == 0:
+            break
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
     """Draw multiline text fragment on canvas, erase text instead of drawing if negative=True is specified."""
-    
+
     rows_number, columns_number = canvas.getmaxyx()
 
     for row, line in enumerate(text.splitlines(), round(start_row)):
@@ -97,7 +99,7 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
             if column >= columns_number:
                 break
-                
+
             if symbol == ' ':
                 continue
 
@@ -111,27 +113,30 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             canvas.addch(row, column, symbol)
 
 
-async def animate_spaceship(canvas, start_row, start_column):
+async def animate_spaceship(canvas, rows, columns):
     files = [file_1, file_2]
-    iterator = cycle(files)
+    for i in cycle(files):
+        draw_frame(canvas, rows / 2, columns / 2, file_1)
+        canvas.refresh()
+        time.sleep(0.1)
+        await asyncio.sleep(0)
+        # стираем предыдущий кадр, прежде чем рисовать новый
+        draw_frame(canvas, rows / 2, columns / 2, file_1, negative=True)
+        canvas.refresh()
+        await asyncio.sleep(0)
+        draw_frame(canvas, rows / 2, columns / 2, file_2)
+        canvas.refresh()
+        await asyncio.sleep(0)
+        draw_frame(canvas, rows / 2, columns / 2, file_2, negative=True)
+        time.sleep(0.1)
+        canvas.refresh()
+        await asyncio.sleep(0)
 
-    draw_frame(canvas, 20, 20, file_1)
-    canvas.refresh()
-    time.sleep(1)
-    # стираем предыдущий кадр, прежде чем рисовать новый
-    draw_frame(canvas, 20, 20, file_1, negative=True)
-    canvas.refresh()
-    draw_frame(canvas, 20, 20, file_2)
-    canvas.refresh()
-    draw_frame(canvas, 20, 20, file_2, negative=True)
-    time.sleep(1)
-    canvas.refresh()
 
-  
 if __name__ == '__main__':
     rocket_1 = open("rocket_frame_1.txt", "r", encoding='utf-8')
     file_1 = rocket_1.read()
     rocket_2 = open("rocket_frame_2.txt", "r", encoding='utf-8')
     file_2 = rocket_2.read()
-    curses.update_lines_cols()  
+    curses.update_lines_cols()
     curses.wrapper(draw)
