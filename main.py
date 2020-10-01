@@ -42,7 +42,8 @@ def read_controls(canvas):
     return rows_direction, columns_direction, space_pressed
 
 
-async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
+async def fire(canvas, start_row, start_column,
+               rows_speed=-0.3, columns_speed=0):
     """Display animation of gun shot, direction and speed can be specified."""
 
     row, column = start_row, start_column
@@ -76,19 +77,23 @@ async def blink(canvas, row, column, symbol='*'):
     min_time_to_blink = 10
     max_time_to_blink = 50
     while True:
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+          random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol, curses.A_DIM)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+          random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+          random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol, curses.A_BOLD)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+          random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol)
             await asyncio.sleep(0)
 
@@ -104,7 +109,7 @@ def draw(canvas):
     coroutines = [blink(canvas, random.randint(1, rows), random.randint(
         1, columns), random.choice(symbols)) for _ in range(100)]
     coroutines.append(fire(canvas, rows / 2, columns / 2 +
-                           1, rows_speed=-0.5, columns_speed=0))
+                           2, rows_speed=-0.5, columns_speed=0))
     coroutines.append(animate_spaceship(canvas, rows, columns))
 
     while True:
@@ -120,8 +125,6 @@ def draw(canvas):
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
-    """Draw multiline text fragment on canvas, erase text instead of drawing if negative=True is specified."""
-
     rows_number, columns_number = canvas.getmaxyx()
 
     for row, line in enumerate(text.splitlines(), round(start_row)):
@@ -141,9 +144,6 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             if symbol == ' ':
                 continue
 
-            # Check that current position it is not in a lower right corner of the window
-            # Curses will raise exception in that case. Don`t ask why…
-            # https://docs.python.org/3/library/curses.html#curses.window.addch
             if row == rows_number - 1 and column == columns_number - 1:
                 continue
 
@@ -152,40 +152,62 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
 
 async def animate_spaceship(canvas, rows, columns):
-    files = [file_1, file_2]
-    for i in cycle(files):
-        draw_frame(canvas, rows / 2, columns / 2, file_1)
+    frames = [frame_1, frame_2]
+    spaceship_speed = 5
+    start_row, start_column = rows / 2, columns / 2
+    max_row = rows - spaceship_speed
+    max_column = columns - spaceship_speed
+
+    for frame in cycle(frames):
+        draw_frame(canvas, start_row, start_column, frame_1)
         canvas.refresh()
         time.sleep(0.1)
         await asyncio.sleep(0)
-        # стираем предыдущий кадр, прежде чем рисовать новый
-        draw_frame(canvas, rows / 2, columns / 2, file_1, negative=True)
+
+        draw_frame(canvas, start_row, start_column, frame_1, negative=True)
         canvas.refresh()
         await asyncio.sleep(0)
-        draw_frame(canvas, rows / 2, columns / 2, file_2)
+
+        draw_frame(canvas, start_row, start_column, frame_2)
         canvas.refresh()
         await asyncio.sleep(0)
-        draw_frame(canvas, rows / 2, columns / 2, file_2, negative=True)
+
+        draw_frame(canvas, start_row, start_column, frame_2, negative=True)
         time.sleep(0.1)
         canvas.refresh()
         await asyncio.sleep(0)
 
         rows_direction, columns_direction, space_pressed = read_controls(
             canvas)
-        if rows_direction == -1:
-            rows -= 10
-        elif rows_direction == 1:
-            rows += 10
-        elif columns_direction == -1:
-            columns -= 10
-        elif columns_direction == 1:
-            columns += 10
+
+        if spaceship_speed < start_row < max_row:
+            if rows_direction == -1:
+                start_row -= spaceship_speed
+            elif rows_direction == 1:
+                start_row += spaceship_speed
+        elif start_row <= spaceship_speed:
+            if rows_direction == 1:
+                start_row += spaceship_speed
+        elif start_row >= max_row:
+            if rows_direction == -1:
+                start_row -= spaceship_speed
+
+        if spaceship_speed < start_column < max_column:
+            if columns_direction == -1:
+                start_column -= spaceship_speed
+            if columns_direction == 1:
+                start_column += spaceship_speed
+        elif start_column <= spaceship_speed:
+            if columns_direction == 1:
+                start_column += spaceship_speed
+        elif start_column >= max_row:
+            start_column -= spaceship_speed
 
 
 if __name__ == '__main__':
     rocket_1 = open("rocket_frame_1.txt", "r", encoding='utf-8')
-    file_1 = rocket_1.read()
+    frame_1 = rocket_1.read()
     rocket_2 = open("rocket_frame_2.txt", "r", encoding='utf-8')
-    file_2 = rocket_2.read()
+    frame_2 = rocket_2.read()
     curses.update_lines_cols()
     curses.wrapper(draw)
