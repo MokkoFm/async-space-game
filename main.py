@@ -11,8 +11,6 @@ DOWN_KEY_CODE = 258
 
 
 def get_frame_size(text):
-    """Calculate size of multiline text fragment, return pair — number of rows and columns."""
-
     lines = text.splitlines()
     rows = len(lines)
     columns = max([len(line) for line in lines])
@@ -50,8 +48,8 @@ def read_controls(canvas):
     return rows_direction, columns_direction, space_pressed
 
 
-async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
-    """Display animation of gun shot, direction and speed can be specified."""
+async def fire(canvas, start_row, start_column,
+               rows_speed=-0.3, columns_speed=0):
 
     row, column = start_row, start_column
 
@@ -84,19 +82,23 @@ async def blink(canvas, row, column, symbol='*'):
     min_time_to_blink = 10
     max_time_to_blink = 50
     while True:
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+                random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol, curses.A_DIM)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+                random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+                random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol, curses.A_BOLD)
             await asyncio.sleep(0)
 
-        for star in range(random.randint(min_time_to_blink, max_time_to_blink)):
+        for star in range(
+                random.randint(min_time_to_blink, max_time_to_blink)):
             canvas.addstr(row, column, symbol)
             await asyncio.sleep(0)
 
@@ -128,8 +130,6 @@ def draw(canvas):
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
-    """Draw multiline text fragment on canvas, erase text instead of drawing if negative=True is specified."""
-
     rows_number, columns_number = canvas.getmaxyx()
 
     for row, line in enumerate(text.splitlines(), round(start_row)):
@@ -149,9 +149,6 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             if symbol == ' ':
                 continue
 
-            # Check that current position it is not in a lower right corner of the window
-            # Curses will raise exception in that case. Don`t ask why…
-            # https://docs.python.org/3/library/curses.html#curses.window.addch
             if row == rows_number - 1 and column == columns_number - 1:
                 continue
 
