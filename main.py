@@ -1,4 +1,3 @@
-import time
 import curses
 import asyncio
 import random
@@ -9,6 +8,15 @@ LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
 UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
+
+
+def get_frame_size(text):
+    """Calculate size of multiline text fragment, return pair — number of rows and columns."""
+
+    lines = text.splitlines()
+    rows = len(lines)
+    columns = max([len(line) for line in lines])
+    return rows, columns
 
 
 def read_controls(canvas):
@@ -155,8 +163,8 @@ async def animate_spaceship(canvas, rows, columns):
     frames = [frame_1, frame_2]
     spaceship_speed = 5
     start_row, start_column = rows / 2, columns / 2
-    max_row = rows - spaceship_speed
-    max_column = columns - spaceship_speed
+    max_row = rows
+    max_column = columns
 
     for frame in cycle(frames):
         draw_frame(canvas, start_row, start_column, frame_1)
@@ -174,27 +182,23 @@ async def animate_spaceship(canvas, rows, columns):
         rows_direction, columns_direction, space_pressed = read_controls(
             canvas)
 
-        if spaceship_speed < start_row < max_row:
-            if rows_direction == -1:
-                start_row -= spaceship_speed
-            elif rows_direction == 1:
-                start_row += spaceship_speed
-        elif start_row <= spaceship_speed:
+        frame_rows, frame_columns = get_frame_size(frame)
+
+        if 0 < start_row < max_row:
+            start_row += (rows_direction * spaceship_speed)
+        elif start_row <= frame_rows:
             if rows_direction == 1:
                 start_row += spaceship_speed
         elif start_row >= max_row:
             if rows_direction == -1:
                 start_row -= spaceship_speed
 
-        if spaceship_speed < start_column < max_column:
-            if columns_direction == -1:
-                start_column -= spaceship_speed
+        if 0 < start_column < max_column:
+            start_column += (columns_direction * spaceship_speed)
+        elif start_column <= frame_columns:
             if columns_direction == 1:
                 start_column += spaceship_speed
-        elif start_column <= spaceship_speed:
-            if columns_direction == 1:
-                start_column += spaceship_speed
-        elif start_column >= max_row:
+        elif start_column >= max_column:
             start_column -= spaceship_speed
 
 
