@@ -117,7 +117,7 @@ def draw(canvas):
                            2, rows_speed=-0.5, columns_speed=0))
     coroutines.append(animate_spaceship(canvas, rows, columns))
 
-    while True:
+    while coroutines:
         canvas.refresh()
         time.sleep(0.1)
         for coroutine in coroutines:
@@ -125,9 +125,6 @@ def draw(canvas):
                 coroutine.send(None)
             except StopIteration:
                 coroutines.remove(coroutine)
-
-        if not coroutines:
-            break
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
