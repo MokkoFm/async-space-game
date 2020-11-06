@@ -1,6 +1,7 @@
 import curses
 import asyncio
 import random
+import time
 from itertools import cycle
 
 SPACE_KEY_CODE = 32
@@ -106,7 +107,6 @@ async def blink(canvas, row, column, symbol='*'):
 def draw(canvas):
     curses.curs_set(False)
     canvas.border()
-    canvas.refresh()
     canvas.nodelay(True)
     rows = canvas.getmaxyx()[0] - 1
     columns = canvas.getmaxyx()[1] - 1
@@ -118,14 +118,15 @@ def draw(canvas):
     coroutines.append(animate_spaceship(canvas, rows, columns))
 
     while True:
+        canvas.refresh()
+        time.sleep(0.1)
         for coroutine in coroutines:
             try:
                 coroutine.send(None)
-                canvas.refresh()
             except StopIteration:
                 coroutines.remove(coroutine)
 
-        if len(coroutines) == 0:
+        if not coroutines:
             break
 
 
