@@ -1,8 +1,8 @@
 import curses
 import asyncio
 import random
-import time
 from itertools import cycle
+import time
 
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
@@ -117,7 +117,7 @@ def draw(canvas):
                            2, rows_speed=-0.5, columns_speed=0))
     coroutines.append(animate_spaceship(canvas, rows, columns))
 
-    while coroutines:
+    for frame in cycle(coroutines.copy()):
         canvas.refresh()
         time.sleep(0.1)
         for coroutine in coroutines:
@@ -156,7 +156,7 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
 async def animate_spaceship(canvas, rows, columns):
     frames = [frame_1, frame_2]
-    spaceship_speed = 5
+    spaceship_speed = 10
     start_row, start_column = rows / 2, columns / 2
     max_row = rows
     max_column = columns
@@ -164,37 +164,25 @@ async def animate_spaceship(canvas, rows, columns):
     for frame in cycle(frames):
         draw_frame(canvas, start_row, start_column, frame_1)
         await asyncio.sleep(0)
-
         draw_frame(canvas, start_row, start_column, frame_1, negative=True)
-        await asyncio.sleep(0)
-
         draw_frame(canvas, start_row, start_column, frame_2)
         await asyncio.sleep(0)
-
         draw_frame(canvas, start_row, start_column, frame_2, negative=True)
-        await asyncio.sleep(0)
-
         rows_direction, columns_direction, space_pressed = read_controls(
             canvas)
 
         frame_rows, frame_columns = get_frame_size(frame)
+        start_row += (rows_direction * spaceship_speed)
+        start_column += (columns_direction * spaceship_speed)
+        if 0 > start_row:
+            start_row = 0
+        elif start_row > max_row:
+            start_row = max_row - frame_rows
 
-        if 0 < start_row < max_row:
-            start_row += (rows_direction * spaceship_speed)
-        elif start_row <= frame_rows:
-            if rows_direction == 1:
-                start_row += spaceship_speed
-        elif start_row >= max_row:
-            if rows_direction == -1:
-                start_row -= spaceship_speed
-
-        if 0 < start_column < max_column:
-            start_column += (columns_direction * spaceship_speed)
-        elif start_column <= frame_columns:
-            if columns_direction == 1:
-                start_column += spaceship_speed
-        elif start_column >= max_column:
-            start_column -= spaceship_speed
+        if 0 > start_column:
+            start_column = 0
+        elif start_column > max_column:
+            start_column = max_column - frame_columns
 
 
 if __name__ == '__main__':
